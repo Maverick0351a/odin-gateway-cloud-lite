@@ -1,5 +1,8 @@
 # ODIN Gateway Cloud Lite
 
+[![CI](https://github.com/maverick0351a/odin-gateway-cloud-lite/actions/workflows/ci.yml/badge.svg)](https://github.com/maverick0351a/odin-gateway-cloud-lite/actions/workflows/ci.yml)
+
+
 **The minimal, production-ready starter for verifiable AI→AI communication.**
 
 - FastAPI gateway that accepts *Open Proof Envelopes (OPE)*
@@ -250,6 +253,26 @@ Confirm health:
 ```bash
 curl -s $(gcloud run services describe odin-gateway-lite --region $REGION --format='value(status.url)')/healthz | jq
 ```
+
+### Authenticated Invocation (Org policy blocks allUsers)
+
+If your organization policy disallows `allUsers` on Cloud Run, deploy without `--allow-unauthenticated` and obtain an identity token per request:
+
+```bash
+URL=$(gcloud run services describe odin-gateway-lite --region $REGION --format='value(status.url)')
+ID_TOKEN=$(gcloud auth print-identity-token)
+curl -H "Authorization: Bearer $ID_TOKEN" "$URL/healthz"
+```
+
+For service-to-service, use the runtime service account's token:
+
+```bash
+curl -H "Authorization: Bearer $(curl -s -H "Metadata-Flavor: Google" \
+  http://metadata/computeMetadata/v1/instance/service-accounts/default/identity?audience=$URL)" \
+  "$URL/healthz"
+```
+
+Add a note for clients: they must present a valid Google-signed identity token with audience set to the service URL.
 
 ### Local MAC Helper Script
 Generate the required HMAC for an ingestion request (mirrors server logic):

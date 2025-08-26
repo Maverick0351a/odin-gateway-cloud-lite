@@ -19,6 +19,7 @@ from .crypto import load_signer_from_env, merge_jwks
 from .hel import check_forward_allowed
 from .receipts import load_receipt_store
 from .utils import canonical_json, now_iso, sha256_cid
+from .logging_config import get_logger
 
 _metrics_lock = Lock()
 _metrics = {
@@ -31,24 +32,7 @@ _metrics = {
 
 app = FastAPI(title="ODIN Gateway Cloud Lite", version="0.1.0")
 
-_req_logger = logging.getLogger("odin.requests")
-if not _req_logger.handlers:
-    h = logging.StreamHandler()
-    if os.getenv("ODIN_REQUEST_LOG_JSON", "false").lower() in {"1", "true", "yes"}:
-        class _JsonFmt(logging.Formatter):
-            def format(self, record: logging.LogRecord) -> str:  # pragma: no cover - formatting
-                base = {
-                    "ts": self.formatTime(record, datefmt="%Y-%m-%dT%H:%M:%S"),
-                    "level": record.levelname,
-                    "logger": record.name,
-                    "msg": record.getMessage(),
-                }
-                return json.dumps(base, separators=(",", ":"))
-        h.setFormatter(_JsonFmt())
-    else:
-        h.setFormatter(logging.Formatter("%(asctime)s %(levelname)s [%(name)s] %(message)s"))
-    _req_logger.addHandler(h)
-_req_logger.setLevel(getattr(logging, os.getenv("ODIN_REQUEST_LOG_LEVEL", "INFO").upper(), logging.INFO))
+_req_logger = get_logger("odin.requests", level_env="ODIN_REQUEST_LOG_LEVEL", default_level="INFO")
 
 @app.middleware("http")
 async def _logging_middleware(request: Request, call_next):  # pragma: no cover - thin instrumentation
