@@ -1,0 +1,23 @@
+# Match .gcloudignore for local builds
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.swp
+*.log
+*.egg-info/
+.eggs/
+.build/
+.dist/
+.cache/
+.pytest_cache/
+coveragehtml/
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.venv/
+.env
+.env.*
+*.sqlite
+receipts.log.jsonl

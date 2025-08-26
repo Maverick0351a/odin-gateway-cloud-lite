@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+.build/
+.dist/
+
+# Virtualenv
+.venv/
+ENV/
+env/
+
+# IDE / Editor
+.vscode/
+.idea/
+
+# Test & coverage artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+coveragehtml/
+
+# Ruff / lint caches
+.ruff_cache/
+.mypy_cache/
+.pyre/
+
+# Logs & local data
+auth.log
+*.log
+receipts.log.jsonl
+
+# Environment files
+.env
+.env.*
+
+# Node (future)
+node_modules/
+
+# Mac / system
+.DS_Store
+
+# Docker build context extras
+*.tar

@@ -1,0 +1,75 @@
+name: Deploy (Cloud Run)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'app/**'
+      - 'requirements.txt'
+      - 'Dockerfile'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+env:
+  SERVICE_NAME: odin-gateway-lite
+  REGION: us-central1
+  # IMAGE repo (Artifact Registry) optional; deploy action can build from source/Dockerfile
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # for Workload Identity Federation (preferred)
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Google Auth
+        # Use either Workload Identity Federation (preferred) OR SA key secret
+        uses: google-github-actions/auth@v2
+        with:
+          # If using workload identity:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          # If instead using a JSON key, comment the two lines above and uncomment below:
+          # credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up gcloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          install_components: 'beta'
+
+      - name: Build & Push (Artifact Registry)
+        run: |
+          PROJECT_ID=$(gcloud config get-value project)
+          IMAGE="${{ env.REGION }}-docker.pkg.dev/${PROJECT_ID}/odin-gateway/odin-gateway-cloud-lite:${{ github.sha }}"
+          gcloud artifacts repositories describe odin-gateway --location=${{ env.REGION }} >/dev/null 2>&1 || \
+            gcloud artifacts repositories create odin-gateway --repository-format=DOCKER --location=${{ env.REGION }} --description="ODIN Gateway images"
+          gcloud builds submit --tag "$IMAGE" .
+          echo "IMAGE_URL=$IMAGE" >> $GITHUB_ENV
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image $IMAGE_URL \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --port 8080 \
+            --memory 512Mi \
+            --cpu 1 \
+            --max-instances 10 \
+            --set-env-vars=PYTHONUNBUFFERED=1 \
+            --set-env-vars=ODIN_BILLING_TIER=${{ secrets.ODIN_BILLING_TIER || 'free' }}
+          # Sensitive runtime secrets (keys, Stripe) should be added via: gcloud run services update --set-secrets KEY=projects/PROJECT/secrets/NAME:latest
+
+      - name: Post-deploy URL
+        run: |
+          URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --region ${{ env.REGION }} --format='value(status.url)')
+          echo "service_url=$URL" >> $GITHUB_OUTPUT
+        id: service
+
+      - name: Summary
+        run: |
+          echo "Deployed: ${{ steps.service.outputs.service_url }}"

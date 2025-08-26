@@ -1,0 +1,38 @@
+# This file tells gcloud which files to ignore when uploading source
+# Generated to mirror typical Python ignores
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+.build/
+.dist/
+
+# Virtualenv
+.venv/
+ENV/
+env/
+
+# Node / frontend (if added later)
+node_modules/
+
+# VCS
+.git/
+.gitignore
+
+# Tests artifacts
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Local receipts & logs
+receipts.log.jsonl
+*.log
+
+# IDE
+.vscode/
+.idea/

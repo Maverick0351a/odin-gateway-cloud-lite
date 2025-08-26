@@ -1,0 +1,10 @@
+fastapi>=0.115.2,<1.0.0         # 0.115.x supports Python 3.13 & new Pydantic
+starlette>=0.40.0,<1.0.0        # Align with fastapi upper compatibility
+uvicorn[standard]==0.30.1
+pydantic>=2.8.2,<3.0.0          # Ensure wheel available for 3.13
+cryptography==43.0.1
+httpx==0.27.0
+python-multipart>=0.0.18,<0.0.99  # Avoid older 0.0.9 pulled by prior pins
+python-dotenv==1.0.1
+google-cloud-firestore==2.16.0
+stripe==11.3.0
